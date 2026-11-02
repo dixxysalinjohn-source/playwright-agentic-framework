@@ -1,38 +1,30 @@
 const { FrameworkAgent } = require('./FrameworkAgent');
 const fs = require('fs');
+const path = require('path');
 
-// CHANGE THIS URL TO ANY SITE YOU WANT
-const SITE_URL = 'https://opensource-demo.orangehrmlive.com';
-const PAGE_NAME = 'LoginPage';
+const PAGE_NAME = process.argv[2] || 'LoginPage';
+const SITE_URL = process.argv[3] || 'https://opensource-demo.orangehrmlive.com/web/index.php/auth/login';
 
 const agent = new FrameworkAgent();
+const prompt = agent.generatePrompt(SITE_URL, PAGE_NAME);
 
-// This generates the prompt that you give to Copilot Chat
-const prompt = agent.generatePrompt(SITE_URL);
-
-console.log('=== COPY THIS PROMPT TO COPILOT CHAT ===');
+console.log(`=== FOR ${PAGE_NAME} at ${SITE_URL} ===`);
 console.log(prompt);
-console.log('\n=== INSTRUCTIONS ===');
-console.log(`1. Open Copilot Chat in VS Code (Ctrl + I)`);
-console.log(`2. Type: @workspace ${prompt}`);
-console.log(`3. Tell it: Create pages/${PAGE_NAME.toLowerCase()}.js using BasePage`);
-console.log(`4. Copilot will generate the file - Accept it`);
 
-// Also auto-create a skeleton file
-const skeleton = `
-const { BasePage } = require('./basePage');
+const skeleton = `const { BasePage } = require('./BasePage');
 class ${PAGE_NAME} extends BasePage {
-    constructor(page) {
-        super(page);
-        // AI will fill these locators after analyzing ${SITE_URL}
-        // this.username = page.getByPlaceholder('Username');
-    }
-    async login(user, pass) {
-        // AI will fill steps
-    }
+  constructor(page) {
+    super(page);
+    this.pageUrl = '${SITE_URL}';
+    // TODO: Add locators for ${SITE_URL}
+  }
+  async goto() { 
+    await this.page.goto(this.pageUrl); 
+  }
 }
 module.exports = { ${PAGE_NAME} };
 `;
 
-fs.writeFileSync(`../pages/${PAGE_NAME.toLowerCase()}_ai_generated.js`, skeleton);
-console.log(`\nSkeleton created: pages/${PAGE_NAME.toLowerCase()}_ai_generated.js`);
+const outputPath = path.join(__dirname, '..', 'Pages', `${PAGE_NAME.toLowerCase()}_ai_generated.js`);
+fs.writeFileSync(outputPath, skeleton);
+console.log(`✅ Created ${outputPath}`);
